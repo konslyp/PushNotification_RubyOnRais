@@ -1,0 +1,140 @@
+<%= form_for :Connect, url: 'remote/actionConnect' do |f| %>
+  <p>
+    <%= f.label :'Device ID' %><br>
+    <%= f.text_field :'Device ID', id: 'input_device_id',value:'123123123' %>
+  </p>
+
+  <p>
+    <%= f.label :'Meeting ID' %><br>
+    <%= f.text_field :'Meeting ID', id: 'input_meeting_id',value:'1234'  %>
+  </p> 
+
+  <p>
+    <%= f.label :'Status:' %>
+    <%= f.label :'Connected',id: 'lbl_status' %><br>
+  </p> 
+
+  <p>
+    <%= f.label :'Volume:' %>
+    <%= f.range_field :'Volume',id: 'input_volume', min: 0, max: 15, value:0 %>
+  </p> 
+  <p>
+    <%= f.label :'MIC Gain:' %>
+    <%= f.range_field :'Gain',id: 'input_mic_volume', min: 0, max: 15, value:0 %>
+  </p> 
+
+ 
+<% end %>
+
+<script>
+  $(function() {
+    $(document).ready(function() {
+      setInterval(function() {
+        var deviceId = $('#input_device_id').val();
+      var meetingId = $('#input_meeting_id').val();
+      if ((deviceId=='') || (meetingId==''))
+      {
+         $('#lbl_status').html('Disconnected');
+ 	 //$('#input_volume').val(1);	
+      }
+      else
+      {
+	$.ajax({
+            type: 'POST',
+            url: '/remote/getDeviceInfo',
+            data: {
+                'device': deviceId,
+                'meeting': meetingId,
+            },
+            success: function(data)
+            {
+                var result = data;//JSON.parse(data);
+                if (result['code'] == 400)
+                {
+			$('#lbl_status').html('Disconnected');
+			//$('#input_volume').val(1);	
+			return;
+                }
+   		if (result['info']['connect_status'] == 0)
+		{
+			$('#lbl_status').html('Disconnected');
+			//$('#input_volume').val(1);	
+			return;
+
+		}
+ 		$('#lbl_status').html('Connected');
+		//$('#input_volume').val(result['info']['sound_volume']);	
+
+            }
+        });   
+      }  
+      }, 2000); // In every 30 seconds
+
+      $("#input_volume").on("change", function()
+	{
+		var deviceId = $('#input_device_id').val();
+		var meetingId = $('#input_meeting_id').val();
+	        if ((deviceId=='') || (meetingId==''))
+      		{
+	
+	 	}
+	        else
+		{
+			$.ajax({
+            type: 'POST',
+            url: '/remote/sendPushNotification',
+            data: {
+                'device': deviceId,
+                'meeting': meetingId,
+		'volume':this.value,
+		'type':0
+
+            },
+            success: function(data)
+            {
+                var result = data;//JSON.parse(data);                
+
+            }
+        });   
+      }  
+
+	}
+
+      );
+
+	$("#input_mic_volume").on("change", function()
+	{
+		var deviceId = $('#input_device_id').val();
+		var meetingId = $('#input_meeting_id').val();
+	        if ((deviceId=='') || (meetingId==''))
+      		{
+	
+	 	}
+	        else
+		{
+			$.ajax({
+            type: 'POST',
+            url: '/remote/sendPushNotification',
+            data: {
+                'device': deviceId,
+                'meeting': meetingId,
+		'volume':this.value,
+		'type':1
+            },
+            success: function(data)
+            {
+                var result = data;//JSON.parse(data);                
+
+            }
+        });   
+      }  
+
+	}
+
+      );
+
+	
+      
+    });
+  });
+</script>
